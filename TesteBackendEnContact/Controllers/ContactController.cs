@@ -2,8 +2,10 @@
 using Microsoft.Extensions.Logging;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using TesteBackendEnContact.Controllers.Models;
 using TesteBackendEnContact.Core.Domain.ContactBook;
 using TesteBackendEnContact.Core.Interface.ContactBook;
+using TesteBackendEnContact.Core.Interface.ContactBook.Contact;
 using TesteBackendEnContact.Repository.Interface;
 
 namespace TesteBackendEnContact.Controllers
@@ -19,6 +21,34 @@ namespace TesteBackendEnContact.Controllers
             _logger = logger;
         }
 
+        [HttpGet]
+        public async Task<IEnumerable<IContact>> Get([FromServices] IContactRepository contactRepository)
+        {
+            return await contactRepository.GetAllAsync();
+        }
+        [HttpPost]
+        public async Task<ActionResult<IContact>> Post(SaveContactRequest contact, [FromServices] IContactRepository contactRepository, [FromServices] ICompanyRepository companyRepository, [FromServices] IContactBookRepository contactBookRepository)
+        {
+            if(contact.CompanyId != null)
+            {
+                var company = await companyRepository.GetAsync(contact.CompanyId.Value);
 
+                if (company == null)
+                    return NotFound("Empresa não econtrada");
+            }
+
+            var contactBook = await contactBookRepository.GetAsync(contact.ContactBookId);
+
+            if (contactBook == null)
+                return NotFound("Agenda não econtrada");
+
+            return Ok(await contactRepository.SaveAsync(contact.ToContact()));
+        }
+
+        [HttpDelete]
+        public async Task Delete(int id, [FromServices] IContactRepository contactRepository)
+        {
+            await contactRepository.DeleteAsync(id);
+        }
     }
 }

@@ -20,9 +20,29 @@ namespace TesteBackendEnContact.Controllers
         }
 
         [HttpPost]
-        public async Task<ActionResult<ICompany>> Post(SaveCompanyRequest company, [FromServices] ICompanyRepository companyRepository)
+        public async Task<ActionResult<ICompany>> Post(SaveCompanyRequest company, [FromServices] ICompanyRepository companyRepository, [FromServices] IContactBookRepository contactBookRepository)
         {
-            return Ok(await companyRepository.SaveAsync(company.ToCompany()));
+            var contactBook = await contactBookRepository.GetAsync(company.ContactBookId);
+
+            if(contactBook != null)
+                return Ok(await companyRepository.SaveAsync(company.ToCompany()));
+            
+            return NotFound("Agenda não econtrada");
+        }
+        [HttpPut("{id}")]
+        public async Task<ActionResult<ICompany>> Put(int id, SaveCompanyRequest company, [FromServices] ICompanyRepository companyRepository, [FromServices] IContactBookRepository contactBookRepository)
+        {
+            var companyToEdit = await companyRepository.GetAsync(id);
+
+            if (companyToEdit == null)
+                return NotFound("Empresa não econtrada");
+
+            var contactBook = await contactBookRepository.GetAsync(company.ContactBookId);
+            
+            if (contactBook == null)
+                return NotFound("Agenda não econtrada");
+
+            return Ok(await companyRepository.UpdateAsync(company.ToCompany(id)));            
         }
 
         [HttpDelete]

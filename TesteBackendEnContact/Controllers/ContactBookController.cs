@@ -2,6 +2,7 @@
 using Microsoft.Extensions.Logging;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using TesteBackendEnContact.Controllers.Models;
 using TesteBackendEnContact.Core.Domain.ContactBook;
 using TesteBackendEnContact.Core.Interface.ContactBook;
 using TesteBackendEnContact.Repository.Interface;
@@ -20,9 +21,19 @@ namespace TesteBackendEnContact.Controllers
         }
 
         [HttpPost]
-        public async Task<IContactBook> Post(ContactBook contactBook, [FromServices] IContactBookRepository contactBookRepository)
+        public async Task<ActionResult<IContactBook>> Post(SaveContactBookRequest contactBook, [FromServices] IContactBookRepository contactBookRepository)
         {
-            return await contactBookRepository.SaveAsync(contactBook);
+            return Ok(await contactBookRepository.SaveAsync(contactBook.ToContactBook()));
+        }
+
+        [HttpPut("{id}")]
+        public async Task<ActionResult<IContactBook>> Put(int id, SaveContactBookRequest contactBook, [FromServices] IContactBookRepository contactBookRepository)
+        {
+            var contactBookToEdit = await contactBookRepository.GetAsync(id);
+            if(contactBookToEdit != null)
+                return Ok(await contactBookRepository.UpdateAsync(contactBook.ToContactBook(id)));
+
+            return NotFound("Agenda não encontrada");
         }
 
         [HttpDelete]

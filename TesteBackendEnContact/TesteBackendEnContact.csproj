@@ -16,7 +16,6 @@
 
   <ItemGroup>
     <Folder Include="Core\Domain\ContactBook\Contact\" />
-    <Folder Include="Core\Interface\ContactBook\Contact\" />
   </ItemGroup>
 
 </Project>
