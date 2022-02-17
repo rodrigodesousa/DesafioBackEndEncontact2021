@@ -11,5 +11,6 @@ namespace TesteBackendEnContact.Repository.Interface
         Task DeleteAsync(int id);
         Task<IEnumerable<IContact>> GetAllAsync();
         Task<IContact> GetAsync(int id);
+        Task<IEnumerable<IContact>> Busca(int pagina, int qtdRegistrosPorPagina, string pesquisa);
     }
 }

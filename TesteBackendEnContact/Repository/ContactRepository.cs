@@ -1,6 +1,7 @@
 ﻿using Dapper;
 using Dapper.Contrib.Extensions;
 using Microsoft.Data.Sqlite;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -54,7 +55,24 @@ namespace TesteBackendEnContact.Repository
 
             return dao.Export();
         }
+        public async Task<IEnumerable<IContact>> Busca(int pagina, int qtdRegistrosPorPagina, string pesquisa)
+        {
+            using var connection = new SqliteConnection(databaseConfig.ConnectionString);
 
+            var queryCountRegistros = "SELECT count(*) FROM Contact";
+            var qtdRegistros = (await connection.QueryAsync<int>(queryCountRegistros));
+
+            int totalPaginas = (int)Math.Ceiling(Convert.ToDecimal(qtdRegistros.First()) / Convert.ToDecimal(qtdRegistrosPorPagina));
+
+            var skip = qtdRegistrosPorPagina * pagina;
+            pesquisa = "%" + pesquisa + "%";
+            var query = @"SELECT * from Contact as cont left join Company as comp on cont.CompanyId = comp.Id where comp.Name Like @pesquisa OR" +
+                " cont.Name LIKE @pesquisa OR cont.Email LIKE @pesquisa OR cont.Phone LIKE @pesquisa OR cont.Address LIKE @pesquisa" +
+                " limit @qtdRegistrosPorPagina OFFSET @skip;";
+            var result = await connection.QueryAsync<ContactDao>(query, new { pesquisa, skip, qtdRegistrosPorPagina });
+
+            return result?.Select(item => item.Export());
+        }
         public Task<IContact> UpdateAsync(IContact contactBook)
         {
             throw new System.NotImplementedException();

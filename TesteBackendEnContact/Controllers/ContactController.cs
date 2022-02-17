@@ -50,5 +50,11 @@ namespace TesteBackendEnContact.Controllers
         {
             await contactRepository.DeleteAsync(id);
         }
+        [HttpGet("busca")]
+        public async Task<IEnumerable<IContact>> Busca(int pagina, int qtdRegistrosPorPagina, string pesquisa, [FromServices] IContactRepository contactRepository)
+        {
+            qtdRegistrosPorPagina = qtdRegistrosPorPagina > 0 ? qtdRegistrosPorPagina : 5;
+            return await contactRepository.Busca(pagina, qtdRegistrosPorPagina, pesquisa);
+        }
     }
 }
