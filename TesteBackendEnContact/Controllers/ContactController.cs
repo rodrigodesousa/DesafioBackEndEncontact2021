@@ -1,6 +1,9 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
+using System;
 using System.Collections.Generic;
+using System.Text;
 using System.Threading.Tasks;
 using TesteBackendEnContact.Controllers.Models;
 using TesteBackendEnContact.Core.Domain.ContactBook;
@@ -15,10 +18,12 @@ namespace TesteBackendEnContact.Controllers
     public class ContactController : ControllerBase
     {
         private readonly ILogger<ContactController> _logger;
+        private readonly IImportador importador;
 
-        public ContactController(ILogger<ContactController> logger)
+        public ContactController(ILogger<ContactController> logger, IImportador importador)
         {
             _logger = logger;
+            this.importador = importador;
         }
 
         [HttpGet]
@@ -55,6 +60,60 @@ namespace TesteBackendEnContact.Controllers
         {
             qtdRegistrosPorPagina = qtdRegistrosPorPagina > 0 ? qtdRegistrosPorPagina : 5;
             return await contactRepository.Busca(pagina, qtdRegistrosPorPagina, pesquisa);
+        }
+        [HttpGet]
+        [Route("criar-csv")]
+        public async Task<ActionResult> CriarCsvContact()
+        {
+            try
+            {
+                var csvFile = await importador.CriarCsv();
+
+                if (string.IsNullOrEmpty(csvFile))
+                    return NoContent();
+
+                var file = File(Encoding.UTF8.GetBytes(csvFile), "text/csv", "contacts.csv");
+
+                return file;
+            }
+            catch (Exception ex)
+            {
+                return BadRequest("Desculpe! Ocorreu um erro! - " + ex.Message);
+            }
+        }
+        [HttpPost]
+        [Route("csv-contact")]
+        public async Task<ActionResult<IEnumerable<SaveContactRequest>>> UploadContactCsvFileAsync(IFormFile file)
+        {
+            var incio = DateTime.Now;
+
+            if (file == null)
+                return BadRequest("O arquivo não foi anexado.");
+
+            if (!file.FileName.EndsWith(".csv"))
+                return BadRequest("O arquivo carregado não é do tipo .csv");
+
+            try
+            {
+                var contactsSaveResult = await importador.CsvContact(file);
+
+                if (contactsSaveResult == null)
+                    return UnprocessableEntity("Nem todos contatos foram salvos.");
+
+                return Ok(contactsSaveResult);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest("Desculpe! Ocorreu um erro! - " + ex.Message);
+            }
+            finally
+            {
+                var final = DateTime.Now;
+
+                var diff = final.Subtract(incio);
+
+                _logger.LogInformation($"======= Tempo decorrido: {diff}");
+            }
         }
     }
 }

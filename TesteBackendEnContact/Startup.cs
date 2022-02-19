@@ -7,6 +7,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.OpenApi.Models;
 
 using System;
+using TesteBackendEnContact.Controllers;
 using TesteBackendEnContact.Database;
 using TesteBackendEnContact.Repository;
 using TesteBackendEnContact.Repository.Interface;
@@ -42,6 +43,7 @@ namespace TesteBackendEnContact
             services.AddScoped<IContactBookRepository, ContactBookRepository>();
             services.AddScoped<ICompanyRepository, CompanyRepository>();
             services.AddScoped<IContactRepository, ContactRepository>();
+            services.AddTransient<IImportador, Importador>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

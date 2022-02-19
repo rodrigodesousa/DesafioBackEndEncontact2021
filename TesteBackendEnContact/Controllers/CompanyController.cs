@@ -42,7 +42,7 @@ namespace TesteBackendEnContact.Controllers
             if (contactBook == null)
                 return NotFound("Agenda não econtrada");
 
-            return Ok(await companyRepository.UpdateAsync(company.ToCompany(id)));            
+            return Ok(await companyRepository.UpdateAsync(company.ToCompany(id)));
         }
 
         [HttpDelete]
