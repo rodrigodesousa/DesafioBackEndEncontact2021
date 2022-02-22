@@ -7,6 +7,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using TesteBackendEnContact.Core.Domain.ContactBook;
+using TesteBackendEnContact.Core.Domain.ContactBook.Company;
 using TesteBackendEnContact.Core.Interface.ContactBook.Contact;
 using TesteBackendEnContact.Database;
 using TesteBackendEnContact.Repository.Interface;
@@ -66,10 +67,33 @@ namespace TesteBackendEnContact.Repository
 
             var skip = qtdRegistrosPorPagina * pagina;
             pesquisa = "%" + pesquisa + "%";
-            var query = @"SELECT * from Contact as cont left join Company as comp on cont.CompanyId = comp.Id where comp.Name Like @pesquisa OR" +
+            var query = @"SELECT * from Contact as cont where" +
                 " cont.Name LIKE @pesquisa OR cont.Email LIKE @pesquisa OR cont.Phone LIKE @pesquisa OR cont.Address LIKE @pesquisa" +
                 " limit @qtdRegistrosPorPagina OFFSET @skip;";
             var result = await connection.QueryAsync<ContactDao>(query, new { pesquisa, skip, qtdRegistrosPorPagina });
+
+            var queryCompany = @"SELECT * from Company inner join Contact on Contact.CompanyId = Company.id where Company.name LIKE @pesquisa" +
+                " limit @qtdRegistrosPorPagina OFFSET @skip;";
+            var resultCompany = await connection.QueryAsync<ContactDao>(queryCompany, new { pesquisa, skip, qtdRegistrosPorPagina });
+            
+            var list = result.ToList().Concat(resultCompany.ToList());
+
+            return list?.GroupBy(x => x.Id).Select(x => x.First().Export());
+        }
+        public async Task<IEnumerable<IContact>> BuscaContatosEmpresa(int companyId, int pagina, int qtdRegistrosPorPagina)
+        {
+            using var connection = new SqliteConnection(databaseConfig.ConnectionString);
+
+            var queryCountRegistros = "SELECT count(*) FROM Contact";
+            var qtdRegistros = (await connection.QueryAsync<int>(queryCountRegistros));
+
+            int totalPaginas = (int)Math.Ceiling(Convert.ToDecimal(qtdRegistros.First()) / Convert.ToDecimal(qtdRegistrosPorPagina));
+
+            var skip = qtdRegistrosPorPagina * pagina - 1;  
+
+            var query = @"SELECT * from Contact cont where cont.CompanyId = @companyId" +
+                " limit @qtdRegistrosPorPagina OFFSET @skip;";
+            var result = await connection.QueryAsync<ContactDao>(query, new { companyId, skip, qtdRegistrosPorPagina });
 
             return result?.Select(item => item.Export());
         }
@@ -77,6 +101,19 @@ namespace TesteBackendEnContact.Repository
         {
             throw new System.NotImplementedException();
         }
+    }
+    public class Pagination<TEntity> where TEntity : class
+    {
+        public Pagination(double countRows, double numberOfPages, IEnumerable<TEntity> listResult)
+        {
+            CountRows = countRows;
+            NumberOfPages = numberOfPages;
+            ListResult = listResult;
+        }
+
+        public double CountRows { get; private set; }
+        public double NumberOfPages { get; private set; }
+        public IEnumerable<TEntity> ListResult { get; private set; }
     }
     [Table("Contact")]
     public class ContactDao : IContact

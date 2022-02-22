@@ -12,5 +12,6 @@ namespace TesteBackendEnContact.Repository.Interface
         Task<IEnumerable<IContact>> GetAllAsync();
         Task<IContact> GetAsync(int id);
         Task<IEnumerable<IContact>> Busca(int pagina, int qtdRegistrosPorPagina, string pesquisa);
+        Task<IEnumerable<IContact>> BuscaContatosEmpresa(int companyId, int pagina, int qtdRegistrosPorPagina);
     }
 }

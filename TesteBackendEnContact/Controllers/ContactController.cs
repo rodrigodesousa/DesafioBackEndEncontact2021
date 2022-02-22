@@ -61,6 +61,12 @@ namespace TesteBackendEnContact.Controllers
             qtdRegistrosPorPagina = qtdRegistrosPorPagina > 0 ? qtdRegistrosPorPagina : 5;
             return await contactRepository.Busca(pagina, qtdRegistrosPorPagina, pesquisa);
         }
+        [HttpGet("{companyId}")]
+        public async Task<IEnumerable<IContact>> BuscaContatosEmpresa(int companyId, int pagina, int qtdRegistrosPorPagina, [FromServices] IContactRepository contactRepository)
+        {
+            qtdRegistrosPorPagina = qtdRegistrosPorPagina > 0 ? qtdRegistrosPorPagina : 5;
+            return await contactRepository.BuscaContatosEmpresa(companyId, pagina, qtdRegistrosPorPagina);
+        }
         [HttpGet]
         [Route("criar-csv")]
         public async Task<ActionResult> CriarCsvContact()
