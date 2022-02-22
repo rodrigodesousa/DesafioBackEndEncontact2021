@@ -42,9 +42,11 @@ namespace TesteBackendEnContact.Repository
             return result?.Select(item => item.Export());
         }
 
-        public Task<IContact> GetAsync(int id)
+        public async Task<IContact> GetAsync(int id)
         {
-            throw new System.NotImplementedException();
+            var list = await GetAllAsync();
+
+            return list.ToList().Where(item => item.Id == id).FirstOrDefault();
         }
 
         public async Task<IContact> SaveAsync(IContact contact)
@@ -97,9 +99,14 @@ namespace TesteBackendEnContact.Repository
 
             return result?.Select(item => item.Export());
         }
-        public Task<IContact> UpdateAsync(IContact contactBook)
+        public async Task<IContact> UpdateAsync(IContact contact)
         {
-            throw new System.NotImplementedException();
+            using var connection = new SqliteConnection(databaseConfig.ConnectionString);
+            var dao = new ContactDao(contact);
+
+            await connection.UpdateAsync(dao);
+
+            return dao.Export();
         }
     }
     public class Pagination<TEntity> where TEntity : class

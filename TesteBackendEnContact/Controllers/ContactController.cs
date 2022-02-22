@@ -49,11 +49,34 @@ namespace TesteBackendEnContact.Controllers
 
             return Ok(await contactRepository.SaveAsync(contact.ToContact()));
         }
+        [HttpPut("{id}")]
+        public async Task<ActionResult<IContact>> Put(int id, SaveContactRequest contact, [FromServices] IContactRepository contactRepository, [FromServices] ICompanyRepository companyRepository, [FromServices] IContactBookRepository contactBookRepository)
+        {
+            if (contact.CompanyId != null)
+            {
+                var company = await companyRepository.GetAsync(contact.CompanyId.Value);
+
+                if (company == null)
+                    return NotFound("Empresa não econtrada");
+            }
+
+            var contactBook = await contactBookRepository.GetAsync(contact.ContactBookId);
+
+            if (contactBook == null)
+                return NotFound("Agenda não econtrada");
+
+            return Ok(await contactRepository.UpdateAsync(contact.ToContact(id)));
+        }
 
         [HttpDelete]
         public async Task Delete(int id, [FromServices] IContactRepository contactRepository)
         {
             await contactRepository.DeleteAsync(id);
+        }
+        [HttpGet("{id}")]
+        public async Task<IContact> Get(int id, [FromServices] IContactRepository contactRepository)
+        {
+            return await contactRepository.GetAsync(id);
         }
         [HttpGet("busca")]
         public async Task<IEnumerable<IContact>> Busca(int pagina, int qtdRegistrosPorPagina, string pesquisa, [FromServices] IContactRepository contactRepository)
@@ -61,7 +84,7 @@ namespace TesteBackendEnContact.Controllers
             qtdRegistrosPorPagina = qtdRegistrosPorPagina > 0 ? qtdRegistrosPorPagina : 5;
             return await contactRepository.Busca(pagina, qtdRegistrosPorPagina, pesquisa);
         }
-        [HttpGet("{companyId}")]
+        [HttpGet("empresa/{companyId}")]
         public async Task<IEnumerable<IContact>> BuscaContatosEmpresa(int companyId, int pagina, int qtdRegistrosPorPagina, [FromServices] IContactRepository contactRepository)
         {
             qtdRegistrosPorPagina = qtdRegistrosPorPagina > 0 ? qtdRegistrosPorPagina : 5;
